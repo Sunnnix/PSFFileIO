@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 import javax.swing.JFileChooser;
 
@@ -56,11 +57,8 @@ import de.snx.psf.util.PSFFileFilter;
  * <br>
  * <b> UPDATE:</b> {@value PSFFileIO#UPDATED}<br>
  * -<br>
- * Changed name from SNX (which is an abbreviation to Sunnix) to PSF (Pair
- * Sorted Format)<br>
- * -<br>
- * Added filter for newer Versions (The version structure up to is considered
- * #.#)<br>
+ * Added new room access feature to work with rooms safely<br>
+ * {@link PSFFileIO#room(String, Consumer)}<br>
  * 
  * @version {@value PSFFileIO#IDENTIFIER}<br>
  *          {@value PSFFileIO#VERSION}<br>
@@ -72,8 +70,8 @@ public class PSFFileIO implements Closeable {
 
 	public static final String IDENTIFIER = "PSFFileIO V3";
 	public static final String OLD_IDENTIFIER = "SNXFileIO V3";
-	public static final String VERSION = "3.1.2";
-	public static final String UPDATED = "22w12";
+	public static final String VERSION = "3.1.3";
+	public static final String UPDATED = "22w18";
 	public static final String CREATOR = "Sunnix";
 
 	private String fileCreator = "n/a";
@@ -302,7 +300,9 @@ public class PSFFileIO implements Closeable {
 	 * if the room dos'nt exists, the room will be created
 	 * 
 	 * @param name room name
+	 * @deprecated use {@link PSFFileIO#room(String, Consumer)}
 	 */
+	@Deprecated
 	public void enterRoom(String name) {
 		if (name == "topRoom") {
 			new Exception("topRoom is no valid room").printStackTrace();
@@ -322,7 +322,9 @@ public class PSFFileIO implements Closeable {
 
 	/**
 	 * go out one step of the current room
+	 * @deprecated use {@link PSFFileIO#room(String, Consumer)}
 	 */
+	@Deprecated
 	public void exitRoom() {
 		if (currentRoom == topRoom)
 			return;
@@ -334,6 +336,12 @@ public class PSFFileIO implements Closeable {
 	 */
 	public void exitAllRooms() {
 		currentRoom = topRoom;
+	}
+	
+	public void room(String name, Consumer<String> function) {
+		enterRoom(name);
+		function.accept(name);
+		exitRoom();
 	}
 
 	public void write(String key, String s) {
