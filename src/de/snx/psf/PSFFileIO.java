@@ -1,12 +1,14 @@
 package de.snx.psf;
 
 import java.awt.Component;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
@@ -63,6 +65,8 @@ import de.snx.psf.util.PSFFileFilter;
  * Bugfix where reading a string array causes a crash<br>
  * -<br>
  * Bugfix on saving and reading empty strings<br>
+ * -<br>
+ * storage of keys and data types changed to save memory<br>
  * 
  * @version {@value PSFFileIO#IDENTIFIER}<br>
  *          {@value PSFFileIO#VERSION}<br>
@@ -74,15 +78,15 @@ public class PSFFileIO implements Closeable {
 
 	public static final String IDENTIFIER = "PSFFileIO V3";
 	public static final String OLD_IDENTIFIER = "SNXFileIO V3";
-	public static final String VERSION = "3.1.4";
+	public static final String VERSION = "3.1.5";
 	public static final String UPDATED = "22w21";
 	public static final String CREATOR = "Sunnix";
 
 	private String fileCreator = "n/a";
 
-	private FileWriter writer;
-	private FileReader reader;
-	private InputStream stream;
+	private BufferedWriter writer;
+	private BufferedReader reader;
+	private BufferedInputStream stream;
 
 	/**
 	 * 
@@ -100,6 +104,11 @@ public class PSFFileIO implements Closeable {
 	 * file
 	 */
 	private static String f_version, f_updated, f_creator;
+
+	/**
+	 * describes the version number of the read file divided into parts
+	 */
+	private int detailedV_0, detailedV_1, detailedV_2;
 
 	/**
 	 * show softerrors like missing fields
@@ -137,17 +146,17 @@ public class PSFFileIO implements Closeable {
 		// write
 		case "w":
 			file = prepareWritingPath(file);
-			writer = new FileWriter(file);
+			writer = new BufferedWriter(new FileWriter(file));
 			break;
 		// read
 		case "r":
-			reader = new FileReader(file);
+			reader = new BufferedReader(new FileReader(file));
 			readData();
 			break;
 		// write and read
 		case "wr":
-			writer = new FileWriter(file);
-			reader = new FileReader(file);
+			writer = new BufferedWriter(new FileWriter(file));
+			reader = new BufferedReader(new FileReader(file));
 			readData();
 			break;
 		default:
@@ -180,17 +189,17 @@ public class PSFFileIO implements Closeable {
 		// write
 		case "w":
 			file = prepareWritingPath(file);
-			writer = new FileWriter(file);
+			writer = new BufferedWriter(new FileWriter(file));
 			break;
 		// read
 		case "r":
-			reader = new FileReader(file);
+			reader = new BufferedReader(new FileReader(file));
 			readData();
 			break;
 		// write and read
 		case "wr":
-			writer = new FileWriter(file);
-			reader = new FileReader(file);
+			writer = new BufferedWriter(new FileWriter(file));
+			reader = new BufferedReader(new FileReader(file));
 			readData();
 			break;
 		default:
@@ -220,8 +229,8 @@ public class PSFFileIO implements Closeable {
 		if (out.isDirectory())
 			throw new IOException("File out file is a Directory");
 		out = prepareWritingPath(out);
-		writer = new FileWriter(out);
-		reader = new FileReader(in);
+		writer = new BufferedWriter(new FileWriter(out));
+		reader = new BufferedReader(new FileReader(in));
 		readData();
 	}
 
@@ -237,7 +246,7 @@ public class PSFFileIO implements Closeable {
 	public PSFFileIO(String pathname) throws IOException, FileFormatException {
 		this();
 		checkFilePath(pathname);
-		stream = getClass().getResourceAsStream("/" + pathname);
+		stream = new BufferedInputStream(getClass().getResourceAsStream("/" + pathname));
 		readData();
 	}
 
@@ -256,7 +265,7 @@ public class PSFFileIO implements Closeable {
 		if (out.isDirectory())
 			throw new IOException("File out file is a Directory");
 		out = prepareWritingPath(out);
-		writer = new FileWriter(out);
+		writer = new BufferedWriter(new FileWriter(out));
 		readData();
 	}
 
@@ -347,38 +356,47 @@ public class PSFFileIO implements Closeable {
 	}
 
 	public void write(String key, String s) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.STRING, s);
 	}
 
 	public void write(String key, char c) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.CHARACTER, Character.toString(c));
 	}
 
 	public void write(String key, byte b) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.BYTE, Byte.toString(b));
 	}
 
 	public void write(String key, short s) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.SHORT, Short.toString(s));
 	}
 
 	public void write(String key, int i) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.INTEGER, Integer.toString(i));
 	}
 
 	public void write(String key, long l) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.LONG, Long.toString(l));
 	}
 
 	public void write(String key, float f) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.FLOAT, Float.toString(f));
 	}
 
 	public void write(String key, double d) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.DOUBLE, Double.toString(d));
 	}
 
 	public void write(String key, boolean b) {
+		checkValidKey(key);
 		currentRoom.write(key, DataType.BOOLEAN, Boolean.toString(b));
 	}
 
@@ -389,38 +407,39 @@ public class PSFFileIO implements Closeable {
 	 * @throws Exception
 	 */
 	public void write(String key, ArrayList<?> list) throws Exception {
-		enterRoom(key + "_array");
-		currentRoom.write("array_size", DataType.INTEGER, Integer.toString(list.size()));
+		checkValidKey(key);
+		enterRoom(key + "*");
+		currentRoom.write("s", DataType.INTEGER, Integer.toString(list.size()));
 		if (list.size() > 0) {
 			DataType arrayType = checkType(list.get(0));
 			for (int i = 0; i < list.size(); i++) {
 				switch (arrayType) {
 				case STRING:
-					currentRoom.write("element_" + i, DataType.STRING, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.STRING, list.get(i).toString());
 					break;
 				case CHARACTER:
-					currentRoom.write("element_" + i, DataType.CHARACTER, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.CHARACTER, list.get(i).toString());
 					break;
 				case BYTE:
-					currentRoom.write("element_" + i, DataType.BYTE, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.BYTE, list.get(i).toString());
 					break;
 				case SHORT:
-					currentRoom.write("element_" + i, DataType.SHORT, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.SHORT, list.get(i).toString());
 					break;
 				case INTEGER:
-					currentRoom.write("element_" + i, DataType.INTEGER, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.INTEGER, list.get(i).toString());
 					break;
 				case LONG:
-					currentRoom.write("element_" + i, DataType.LONG, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.LONG, list.get(i).toString());
 					break;
 				case FLOAT:
-					currentRoom.write("element_" + i, DataType.FLOAT, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.FLOAT, list.get(i).toString());
 					break;
 				case DOUBLE:
-					currentRoom.write("element_" + i, DataType.DOUBLE, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.DOUBLE, list.get(i).toString());
 					break;
 				case BOOLEAN:
-					currentRoom.write("element_" + i, DataType.BOOLEAN, list.get(i).toString());
+					currentRoom.write("e" + i, DataType.BOOLEAN, list.get(i).toString());
 					break;
 				default:
 					throw new Exception("Something unexpected happened");// this should never happen
@@ -571,55 +590,66 @@ public class PSFFileIO implements Closeable {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public ArrayList<?> readArrayList(String key) throws Exception {
 		ArrayList list;
-		enterRoom(key + "_array");
-		int arraySize = currentRoom.getDataObject("array_size").getDataAsInteger();
+		// to cover old files
+		String keySuffix, keySize, keyElement;
+		if (isVerionOrLower(3, 1, 4)) {
+			keySuffix = "_array";
+			keySize = "array_size";
+			keyElement = "element_";
+		} else {
+			keySuffix = "*";
+			keySize = "s";
+			keyElement = "e";
+		}
+		enterRoom(key + keySuffix);
+		int arraySize = currentRoom.getDataObject(keySize).getDataAsInteger();
 		if (arraySize > 0) {
-			DataType type = currentRoom.getDataObject("element_0").getType();
+			DataType type = currentRoom.getDataObject(keyElement + "0").getType();
 			switch (type) {
 			case STRING:
 				list = new ArrayList<String>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readString("element_" + i));
+					list.add(readString(keyElement + i));
 				break;
 			case CHARACTER:
 				list = new ArrayList<Character>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readChar("element_" + i));
+					list.add(readChar(keyElement + i));
 				break;
 			case BYTE:
 				list = new ArrayList<Byte>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readByte("element_" + i));
+					list.add(readByte(keyElement + i));
 				break;
 			case SHORT:
 				list = new ArrayList<Short>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readShort("element_" + i));
+					list.add(readShort(keyElement + i));
 				break;
 			case INTEGER:
 				list = new ArrayList<Integer>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readInt("element_" + i));
+					list.add(readInt(keyElement + i));
 				break;
 			case LONG:
 				list = new ArrayList<Long>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readLong("element_" + i));
+					list.add(readLong(keyElement + i));
 				break;
 			case FLOAT:
 				list = new ArrayList<Float>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readFloat("element_" + i));
+					list.add(readFloat(keyElement + i));
 				break;
 			case DOUBLE:
 				list = new ArrayList<Double>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readDouble("element_" + i));
+					list.add(readDouble(keyElement + i));
 				break;
 			case BOOLEAN:
 				list = new ArrayList<Boolean>();
 				for (int i = 0; i < arraySize; i++)
-					list.add(readBoolean("element_" + i));
+					list.add(readBoolean(keyElement + i));
 				break;
 			default:
 				throw new Exception("Something unexpected happened");// this should never happen
@@ -778,6 +808,13 @@ public class PSFFileIO implements Closeable {
 		if (!datatext.equals(IDENTIFIER) && !datatext.equals(OLD_IDENTIFIER))
 			throw new FileFormatException("The file does not correspond to the PSFFileIO format");
 		f_version = checkVersion(builder.getDataText().substring("Version: ".length()));
+		String[] vNum = f_version.split("[.]");
+		if (vNum.length > 0)
+			detailedV_0 = Integer.parseInt(vNum[0]);
+		if (vNum.length > 1)
+			detailedV_1 = Integer.parseInt(vNum[1]);
+		if (vNum.length > 2)
+			detailedV_2 = Integer.parseInt(vNum[2]);
 		f_updated = builder.getDataText().substring("Updated: ".length());
 		f_creator = builder.getDataText().substring("Creator: ".length());
 		fileCreator = builder.getDataText().substring("File Creator: ".length());
@@ -935,5 +972,21 @@ public class PSFFileIO implements Closeable {
 
 	public static File chooseFile(Component parent, boolean open) {
 		return chooseFile(null, parent, open);
+	}
+
+	private void checkValidKey(String key) {
+		if (key.contains("*"))
+			throw new RuntimeException("The key " + key + " is invalid!");
+	}
+
+	/**
+	 * @param m Main Version Number
+	 * @param c Change Version Number
+	 * @param f Fix Version Number
+	 * @return true if the file Version equals or is Lower then the current
+	 *         PSFFileIO Version
+	 */
+	public boolean isVerionOrLower(int m, int c, int f) {
+		return detailedV_0 <= m && detailedV_1 <= c && detailedV_2 <= f;
 	}
 }

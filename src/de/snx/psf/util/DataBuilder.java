@@ -1,7 +1,7 @@
 package de.snx.psf.util;
 
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -16,20 +16,20 @@ import de.snx.psf.PSFFileIO;
 public class DataBuilder {
 
 	private PSFFileIO fileIO;
-	private FileWriter writer;
-	private FileReader reader;
+	private BufferedWriter writer;
+	private BufferedReader reader;
 	private InputStream stream;
 
 	public DataBuilder(PSFFileIO fileIO) {
 		this.fileIO = fileIO;
 	}
 
-	public DataBuilder(PSFFileIO fileIO, FileWriter writer) {
+	public DataBuilder(PSFFileIO fileIO, BufferedWriter writer) {
 		this(fileIO);
 		this.writer = writer;
 	}
 
-	public DataBuilder(PSFFileIO fileIO, FileReader reader) {
+	public DataBuilder(PSFFileIO fileIO, BufferedReader reader) {
 		this(fileIO);
 		this.reader = reader;
 	}
@@ -60,7 +60,7 @@ public class DataBuilder {
 			throw new NullPointerException("no writer is defined");
 		buildDataText(object.getKey());
 		DataType type = object.getType();
-		buildDataText(type.name());
+		buildDataText(String.valueOf(type.ID));
 		if (type.equals(DataType.STRING)) {
 			if (object.getData() == null)
 				object.setData("");
@@ -104,7 +104,10 @@ public class DataBuilder {
 		if (reader == null && stream == null)
 			throw new NullPointerException("no reader/stream is defined");
 		key = getDataText();
-		type = DataType.valueOf(getDataText());
+		if (fileIO.isVerionOrLower(3, 1, 4))
+			type = DataType.valueOf(getDataText());
+		else
+			type = DataType.values()[Integer.parseInt(getDataText())];
 		if (fileIO.getFileVersion().equals("3.0") || type.equals(DataType.STRING) == false) {
 			data = getDataText();
 		} else {
