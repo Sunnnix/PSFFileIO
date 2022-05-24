@@ -62,9 +62,12 @@ public class DataBuilder {
 		DataType type = object.getType();
 		buildDataText(type.name());
 		if (type.equals(DataType.STRING)) {
+			if (object.getData() == null)
+				object.setData("");
 			String temp = Integer.toString(object.getData().length());
 			writer.write(temp.length());
-			writer.write(temp);
+			if (!temp.isEmpty())
+				writer.write(temp);
 			writer.write(object.getData());
 		} else {
 			buildDataText(object.getData());
@@ -80,9 +83,11 @@ public class DataBuilder {
 		String data = new String();
 		int lenght;
 		lenght = reader == null ? stream.read() : reader.read();
-		for (int i = 0; i < lenght; i++) {
-			data += (char) (reader == null ? stream.read() : reader.read());
-		}
+		if (lenght <= 0)
+			data = "";
+		else
+			for (int i = 0; i < lenght; i++)
+				data += (char) (reader == null ? stream.read() : reader.read());
 		return data;
 	}
 
