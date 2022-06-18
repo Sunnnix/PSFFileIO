@@ -516,73 +516,109 @@ public class PSFFileIO implements Closeable {
 	}
 
 	public String readString(String key) {
+		return readString(key, "");
+	}
+
+	public String readString(String key, String defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return "null";
+			return defaultValue;
 		else
 			return dO.getDataAsString();
 	}
 
 	public char readChar(String key) {
+		return readChar(key, ' ');
+	}
+
+	public char readChar(String key, char defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return ' ';
+			return defaultValue;
 		else
 			return dO.getDataAsCharacter();
 	}
 
 	public byte readByte(String key) {
+		return readByte(key, (byte) 0);
+	}
+
+	public byte readByte(String key, byte defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return -1;
+			return defaultValue;
 		else
 			return dO.getDataAsByte();
 	}
 
 	public short readShort(String key) {
+		return readShort(key, (short) 0);
+	}
+
+	public short readShort(String key, short defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return -1;
+			return defaultValue;
 		else
 			return dO.getDataAsShort();
 	}
 
 	public int readInt(String key) {
+		return readInt(key, 0);
+	}
+
+	public int readInt(String key, int defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return -1;
+			return defaultValue;
 		else
 			return dO.getDataAsInteger();
 	}
 
 	public long readLong(String key) {
+		return readLong(key, 0L);
+	}
+
+	public long readLong(String key, long defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return -1;
+			return defaultValue;
 		else
 			return dO.getDataAsLong();
 	}
 
 	public float readFloat(String key) {
+		return readFloat(key, 0f);
+	}
+
+	public float readFloat(String key, float defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return -1;
+			return defaultValue;
 		else
 			return dO.getDataAsFloat();
 	}
 
 	public double readDouble(String key) {
+		return readDouble(key, 0d);
+	}
+
+	public double readDouble(String key, double defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return -1;
+			return defaultValue;
 		else
 			return dO.getDataAsDouble();
 	}
 
 	public boolean readBoolean(String key) {
+		return readBoolean(key, false);
+	}
+
+	public boolean readBoolean(String key, boolean defaultValue) {
 		DataObject dO = currentRoom.getDataObject(key);
 		if (dO == null)
-			return false;
+			return defaultValue;
 		else
 			return dO.getDataAsBoolean();
 	}
