@@ -59,14 +59,7 @@ import de.snx.psf.util.PSFFileFilter;
  * <br>
  * <b> UPDATE:</b> {@value PSFFileIO#UPDATED}<br>
  * -<br>
- * Added new room access feature to work with rooms safely<br>
- * {@link PSFFileIO#room(String, Consumer)}<br>
- * -<br>
- * Bugfix where reading a string array causes a crash<br>
- * -<br>
- * Bugfix on saving and reading empty strings<br>
- * -<br>
- * storage of keys and data types changed to save memory<br>
+ * added alternate functions to define default return values on read failure<br>
  * 
  * @version {@value PSFFileIO#IDENTIFIER}<br>
  *          {@value PSFFileIO#VERSION}<br>
@@ -78,8 +71,8 @@ public class PSFFileIO implements Closeable {
 
 	public static final String IDENTIFIER = "PSFFileIO V3";
 	public static final String OLD_IDENTIFIER = "SNXFileIO V3";
-	public static final String VERSION = "3.1.5";
-	public static final String UPDATED = "22w21";
+	public static final String VERSION = "3.1.6";
+	public static final String UPDATED = "22w24";
 	public static final String CREATOR = "Sunnix";
 
 	private String fileCreator = "n/a";
